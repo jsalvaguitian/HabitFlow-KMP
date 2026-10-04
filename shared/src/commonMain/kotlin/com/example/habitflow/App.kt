@@ -1,6 +1,5 @@
 package com.example.habitflow
 
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -11,13 +10,14 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.habitflow.ui.CreateHabitScreen
 import com.example.habitflow.ui.HabitsViewModel
 import com.example.habitflow.ui.HomeScreen
+import com.example.habitflow.ui.theme.HabitFlowTheme
 
 @Composable
 @Preview
 fun App(viewModel: HabitsViewModel = viewModel { HabitsViewModel() }) {
     var showCreateScreen by remember { mutableStateOf(false) }
 
-    MaterialTheme {
+    HabitFlowTheme {
         if (showCreateScreen) {
             CreateHabitScreen(
                 viewModel = viewModel,
