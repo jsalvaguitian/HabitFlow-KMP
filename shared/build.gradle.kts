@@ -1,10 +1,35 @@
+import com.codingfeline.buildkonfig.compiler.FieldSpec.Type.STRING
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import java.util.Properties
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.androidMultiplatformLibrary)
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
+    alias(libs.plugins.kotlinSerialization)
+    alias(libs.plugins.buildkonfig)
+}
+
+val localProperties = Properties().apply {
+    val localPropertiesFile = rootProject.file("local.properties")
+    if (localPropertiesFile.exists()) {
+        localPropertiesFile.inputStream().use { load(it) }
+    }
+}
+
+val supabaseUrl = localProperties.getProperty("SUPABASE_URL")
+    ?: error("Missing SUPABASE_URL in local.properties")
+val supabasePublishableKey = localProperties.getProperty("SUPABASE_PUBLISHABLE_KEY")
+    ?: error("Missing SUPABASE_PUBLISHABLE_KEY in local.properties")
+
+buildkonfig {
+    packageName = "com.example.habitflow.config"
+
+    defaultConfigs {
+        buildConfigField(STRING, "SUPABASE_URL", supabaseUrl)
+        buildConfigField(STRING, "SUPABASE_PUBLISHABLE_KEY", supabasePublishableKey)
+    }
 }
 
 kotlin {
@@ -43,8 +68,14 @@ kotlin {
         androidMain.dependencies {
             implementation(libs.compose.uiToolingPreview)
             implementation(libs.compose.uiTooling)
+            implementation(libs.ktor.client.android)
+        }
+        iosMain.dependencies {
+            implementation(libs.ktor.client.darwin)
         }
         commonMain.dependencies {
+            implementation(project.dependencies.platform(libs.supabase.bom))
+            implementation(libs.supabase.postgrest)
             implementation(libs.compose.runtime)
             implementation(libs.compose.foundation)
             implementation(libs.compose.material3)
