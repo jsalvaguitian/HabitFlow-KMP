@@ -107,6 +107,40 @@ class HabitsViewModel(
         }
     }
 
+    fun updateHabit(id: Long, title: String, description: String?, frequency: String) {
+        val trimmedTitle = title.trim()
+        val trimmedFrequency = frequency.trim()
+
+        val titleError = if (trimmedTitle.isEmpty()) "El título es obligatorio" else null
+        val frequencyError = if (trimmedFrequency.isEmpty()) "La frecuencia es obligatoria" else null
+
+        if (titleError != null || frequencyError != null) {
+            _createUiState.value = CreateHabitUiState.ValidationError(
+                titleError = titleError,
+                frequencyError = frequencyError,
+            )
+            return
+        }
+
+        viewModelScope.launch {
+            _createUiState.value = CreateHabitUiState.Loading
+            try {
+                repository.updateHabit(
+                    id = id,
+                    title = trimmedTitle,
+                    description = description?.trim(),
+                    frequency = trimmedFrequency,
+                )
+                _createUiState.value = CreateHabitUiState.Success
+                loadHabits()
+            } catch (e: Exception) {
+                _createUiState.value = CreateHabitUiState.Error(
+                    e.message ?: "Error al actualizar el hábito en Supabase",
+                )
+            }
+        }
+    }
+
     fun resetCreateState() {
         _createUiState.value = CreateHabitUiState.Idle
     }

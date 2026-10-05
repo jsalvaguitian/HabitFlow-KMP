@@ -27,17 +27,19 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.habitflow.model.Habit
 
 @Composable
 fun CreateHabitScreen(
     viewModel: HabitsViewModel,
+    habitToEdit: Habit? = null,
     onBack: () -> Unit,
 ) {
     val createUiState by viewModel.createUiState.collectAsStateWithLifecycle()
 
-    var title by remember { mutableStateOf("") }
-    var description by remember { mutableStateOf("") }
-    var frequency by remember { mutableStateOf("Diaria") }
+    var title by remember(habitToEdit) { mutableStateOf(habitToEdit?.title ?: "") }
+    var description by remember(habitToEdit) { mutableStateOf(habitToEdit?.description ?: "") }
+    var frequency by remember(habitToEdit) { mutableStateOf(habitToEdit?.frequency ?: "Diaria") }
 
     LaunchedEffect(createUiState) {
         if (createUiState is CreateHabitUiState.Success) {
@@ -64,7 +66,7 @@ fun CreateHabitScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Text(
-                text = "Crear Nuevo Hábito",
+                text = if (habitToEdit != null) "Editar Hábito" else "Crear Nuevo Hábito",
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.primary,
@@ -139,16 +141,25 @@ fun CreateHabitScreen(
 
                 Button(
                     onClick = {
-                        viewModel.createHabit(
-                            title = title,
-                            description = description,
-                            frequency = frequency,
-                        )
+                        if (habitToEdit != null) {
+                            viewModel.updateHabit(
+                                id = habitToEdit.id,
+                                title = title,
+                                description = description,
+                                frequency = frequency,
+                            )
+                        } else {
+                            viewModel.createHabit(
+                                title = title,
+                                description = description,
+                                frequency = frequency,
+                            )
+                        }
                     },
                     modifier = Modifier.weight(1f),
                     enabled = !isLoading,
                 ) {
-                    Text("Guardar")
+                    Text(if (habitToEdit != null) "Guardar cambios" else "Guardar")
                 }
             }
         }

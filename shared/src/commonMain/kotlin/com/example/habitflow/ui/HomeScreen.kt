@@ -24,6 +24,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -41,6 +42,7 @@ import com.example.habitflow.ui.theme.IntelliJSurfaceCompleted
 fun HomeScreen(
     viewModel: HabitsViewModel,
     onCreateHabitClick: () -> Unit = {},
+    onEditHabitClick: (Habit) -> Unit = {},
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val updatingIds by viewModel.updatingHabitIds.collectAsStateWithLifecycle()
@@ -163,6 +165,7 @@ fun HomeScreen(
                                     habit = habit,
                                     isUpdating = updatingIds.contains(habit.id),
                                     onToggleCompletion = { viewModel.toggleHabitCompletion(habit) },
+                                    onEditClick = { onEditHabitClick(habit) },
                                 )
                             }
                         }
@@ -178,6 +181,7 @@ fun HabitItem(
     habit: Habit,
     isUpdating: Boolean,
     onToggleCompletion: () -> Unit,
+    onEditClick: () -> Unit,
 ) {
     val cardContainerColor = if (habit.completed) {
         IntelliJSurfaceCompleted
@@ -308,17 +312,16 @@ fun HabitItem(
                 }
             }
 
-            // Placeholder area for future actions (Edit, Delete, Complete) without implementing logic
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(4.dp))
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.End,
             ) {
-                Text(
-                    text = "• • •",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
-                )
+                TextButton(
+                    onClick = onEditClick,
+                ) {
+                    Text("Editar")
+                }
             }
         }
     }
