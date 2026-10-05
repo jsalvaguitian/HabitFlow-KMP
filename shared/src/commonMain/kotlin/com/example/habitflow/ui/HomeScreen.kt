@@ -14,6 +14,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.layout.width
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -29,6 +31,9 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -46,6 +51,36 @@ fun HomeScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val updatingIds by viewModel.updatingHabitIds.collectAsStateWithLifecycle()
+    var habitToDelete by remember { mutableStateOf<Habit?>(null) }
+
+    if (habitToDelete != null) {
+        val habit = habitToDelete!!
+        AlertDialog(
+            onDismissRequest = { habitToDelete = null },
+            title = { Text("¿Eliminar hábito?") },
+            text = { Text("¿Estás seguro de que querés eliminar \"${habit.title}\"?") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        viewModel.deleteHabit(habit.id)
+                        habitToDelete = null
+                    },
+                ) {
+                    Text(
+                        text = "Eliminar",
+                        color = MaterialTheme.colorScheme.error,
+                    )
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { habitToDelete = null },
+                ) {
+                    Text("Cancelar")
+                }
+            },
+        )
+    }
 
     Scaffold(
         topBar = {
@@ -166,6 +201,7 @@ fun HomeScreen(
                                     isUpdating = updatingIds.contains(habit.id),
                                     onToggleCompletion = { viewModel.toggleHabitCompletion(habit) },
                                     onEditClick = { onEditHabitClick(habit) },
+                                    onDeleteClick = { habitToDelete = habit },
                                 )
                             }
                         }
@@ -182,6 +218,7 @@ fun HabitItem(
     isUpdating: Boolean,
     onToggleCompletion: () -> Unit,
     onEditClick: () -> Unit,
+    onDeleteClick: () -> Unit,
 ) {
     val cardContainerColor = if (habit.completed) {
         IntelliJSurfaceCompleted
@@ -316,11 +353,23 @@ fun HabitItem(
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.End,
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 TextButton(
                     onClick = onEditClick,
+                    enabled = !isUpdating,
                 ) {
                     Text("Editar")
+                }
+                Spacer(modifier = Modifier.width(4.dp))
+                TextButton(
+                    onClick = onDeleteClick,
+                    enabled = !isUpdating,
+                ) {
+                    Text(
+                        text = "Eliminar",
+                        color = MaterialTheme.colorScheme.error,
+                    )
                 }
             }
         }

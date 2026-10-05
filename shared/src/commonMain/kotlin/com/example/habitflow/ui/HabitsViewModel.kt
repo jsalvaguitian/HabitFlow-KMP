@@ -144,4 +144,22 @@ class HabitsViewModel(
     fun resetCreateState() {
         _createUiState.value = CreateHabitUiState.Idle
     }
+
+    fun deleteHabit(id: Long) {
+        if (_updatingHabitIds.value.contains(id)) return
+        _updatingHabitIds.value = _updatingHabitIds.value + id
+
+        viewModelScope.launch {
+            try {
+                repository.deleteHabit(id)
+                loadHabits()
+            } catch (e: Exception) {
+                _uiState.value = HabitsUiState.Error(
+                    e.message ?: "Error al eliminar el hábito"
+                )
+            } finally {
+                _updatingHabitIds.value = _updatingHabitIds.value - id
+            }
+        }
+    }
 }

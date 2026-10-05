@@ -51,4 +51,14 @@ class HabitRepository {
                 }
             }
     }
+
+    suspend fun deleteHabit(id: Long) {
+        supabase
+            .from("habits")
+            .delete {
+                filter {
+                    eq("id", id)
+                }
+            }
+    }
 }
