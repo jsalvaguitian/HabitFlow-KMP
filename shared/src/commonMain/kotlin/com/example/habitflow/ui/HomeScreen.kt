@@ -11,11 +11,13 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -29,9 +31,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.habitflow.model.Habit
+import com.example.habitflow.ui.theme.IntelliJSurfaceCompleted
 
 @Composable
 fun HomeScreen(
@@ -39,6 +43,7 @@ fun HomeScreen(
     onCreateHabitClick: () -> Unit = {},
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val updatingIds by viewModel.updatingHabitIds.collectAsStateWithLifecycle()
 
     Scaffold(
         topBar = {
@@ -154,7 +159,11 @@ fun HomeScreen(
                             verticalArrangement = Arrangement.spacedBy(12.dp),
                         ) {
                             items(state.habits, key = { it.id }) { habit ->
-                                HabitItem(habit = habit)
+                                HabitItem(
+                                    habit = habit,
+                                    isUpdating = updatingIds.contains(habit.id),
+                                    onToggleCompletion = { viewModel.toggleHabitCompletion(habit) },
+                                )
                             }
                         }
                     }
@@ -165,11 +174,21 @@ fun HomeScreen(
 }
 
 @Composable
-fun HabitItem(habit: Habit) {
+fun HabitItem(
+    habit: Habit,
+    isUpdating: Boolean,
+    onToggleCompletion: () -> Unit,
+) {
+    val cardContainerColor = if (habit.completed) {
+        IntelliJSurfaceCompleted
+    } else {
+        MaterialTheme.colorScheme.surfaceVariant
+    }
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant,
+            containerColor = cardContainerColor,
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
     ) {
@@ -183,13 +202,38 @@ fun HabitItem(habit: Habit) {
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Text(
-                    text = habit.title,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface,
+                Row(
                     modifier = Modifier.weight(1f),
-                )
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    if (isUpdating) {
+                        Box(
+                            modifier = Modifier.size(24.dp),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(16.dp),
+                                strokeWidth = 2.dp,
+                                color = MaterialTheme.colorScheme.primary,
+                            )
+                        }
+                    } else {
+                        Checkbox(
+                            checked = habit.completed,
+                            onCheckedChange = { _ -> onToggleCompletion() },
+                        )
+                    }
+                    Text(
+                        text = habit.title,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        textDecoration = if (habit.completed) TextDecoration.LineThrough else null,
+                        modifier = Modifier.weight(1f),
+                    )
+                }
+
                 Surface(
                     color = if (habit.completed) {
                         MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)

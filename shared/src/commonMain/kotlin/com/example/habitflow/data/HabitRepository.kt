@@ -2,6 +2,7 @@ package com.example.habitflow.data
 
 import com.example.habitflow.model.CreateHabitRequest
 import com.example.habitflow.model.Habit
+import com.example.habitflow.model.UpdateHabitCompletionRequest
 import com.example.habitflow.supabase
 import io.github.jan.supabase.postgrest.from
 
@@ -22,5 +23,16 @@ class HabitRepository {
         supabase
             .from("habits")
             .insert(request)
+    }
+
+    suspend fun updateHabitCompletion(id: Long, completed: Boolean) {
+        val request = UpdateHabitCompletionRequest(completed = completed)
+        supabase
+            .from("habits")
+            .update(request) {
+                filter {
+                    eq("id", id)
+                }
+            }
     }
 }

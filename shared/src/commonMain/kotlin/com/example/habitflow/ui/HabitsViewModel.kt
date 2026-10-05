@@ -36,6 +36,9 @@ class HabitsViewModel(
     private val _createUiState = MutableStateFlow<CreateHabitUiState>(CreateHabitUiState.Idle)
     val createUiState: StateFlow<CreateHabitUiState> = _createUiState.asStateFlow()
 
+    private val _updatingHabitIds = MutableStateFlow<Set<Long>>(emptySet())
+    val updatingHabitIds: StateFlow<Set<Long>> = _updatingHabitIds.asStateFlow()
+
     init {
         loadHabits()
     }
@@ -48,6 +51,25 @@ class HabitsViewModel(
                 _uiState.value = HabitsUiState.Success(habits)
             } catch (e: Exception) {
                 _uiState.value = HabitsUiState.Error(e.message ?: "Error al cargar hábitos")
+            }
+        }
+    }
+
+    fun toggleHabitCompletion(habit: Habit) {
+        val targetId = habit.id
+        if (_updatingHabitIds.value.contains(targetId)) return
+
+        val newCompleted = !habit.completed
+        _updatingHabitIds.value = _updatingHabitIds.value + targetId
+
+        viewModelScope.launch {
+            try {
+                repository.updateHabitCompletion(targetId, newCompleted)
+                loadHabits()
+            } catch (e: Exception) {
+                // Keep current state
+            } finally {
+                _updatingHabitIds.value = _updatingHabitIds.value - targetId
             }
         }
     }
