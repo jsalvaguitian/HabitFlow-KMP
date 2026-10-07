@@ -288,24 +288,17 @@ El workflow ejecuta los tests automáticamente ante cambios en el repositorio y 
 
 ## Capturas
 
-* Launcher Icon
-  
-![Imagen 1](/screenshots/launcher_icon.png)
-* Pantalla principal con todos los hábitos.
-  
-![Imagen 2](/screenshots/Home.jpg)
-* Creación de hábitos.
-  
-![Imagen 3](/screenshots/CrearHabito.jpg)
-* Edición de hábitos.
-  
-![Imagen 4](/screenshots/EditarHabito.jpg)
-* Eliminación de hábitos.
-  
-![Imagen 5](/screenshots/EliminarHabito.jpg)
-* Filtros.
-  
-![Imagen 6](/screenshots/Filtro.jpg)
+| Launcher Icon | Pantalla principal |
+|:---:|:---:|
+| <img src="screenshots/launcher_icon.png" height="350"> | <img src="screenshots/Home.jpg" height="350"> |
+
+| Creación de hábitos | Edición de hábitos |
+|:---:|:---:|
+| <img src="screenshots/CrearHabito.jpg" height="350"> | <img src="screenshots/EditarHabito.jpg" height="350"> |
+
+| Eliminación de hábitos | Filtros |
+|:---:|:---:|
+| <img src="screenshots/EliminarHabito.jpg" height="350"> | <img src="screenshots/Filtro.jpg" height="350"> |
 
 
 ---
