@@ -3,6 +3,7 @@ package com.example.habitflow.ui
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.habitflow.data.HabitRepository
+import com.example.habitflow.data.SupabaseHabitRepository
 import com.example.habitflow.model.Habit
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -27,7 +28,7 @@ sealed interface CreateHabitUiState {
 }
 
 class HabitsViewModel(
-    private val repository: HabitRepository = HabitRepository(),
+    private val repository: HabitRepository = SupabaseHabitRepository(),
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<HabitsUiState>(HabitsUiState.Loading)
@@ -65,7 +66,18 @@ class HabitsViewModel(
         viewModelScope.launch {
             try {
                 repository.updateHabitCompletion(targetId, newCompleted)
-                loadHabits()
+                val currentState = _uiState.value
+                if (currentState is HabitsUiState.Success) {
+                    _uiState.value = HabitsUiState.Success(
+                        currentState.habits.map { currentHabit ->
+                            if (currentHabit.id == targetId) {
+                                currentHabit.copy(completed = newCompleted)
+                            } else {
+                                currentHabit
+                            }
+                        }
+                    )
+                }
             } catch (e: Exception) {
                 // Keep current state
             } finally {

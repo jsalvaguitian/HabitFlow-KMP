@@ -19,9 +19,11 @@ val localProperties = Properties().apply {
 }
 
 val supabaseUrl = localProperties.getProperty("SUPABASE_URL")
-    ?: error("Missing SUPABASE_URL in local.properties")
+    ?: System.getenv("SUPABASE_URL")
+    ?: "https://placeholder.supabase.co"
 val supabasePublishableKey = localProperties.getProperty("SUPABASE_PUBLISHABLE_KEY")
-    ?: error("Missing SUPABASE_PUBLISHABLE_KEY in local.properties")
+    ?: System.getenv("SUPABASE_PUBLISHABLE_KEY")
+    ?: "placeholder-publishable-key"
 
 buildkonfig {
     packageName = "com.example.habitflow.config"
@@ -87,6 +89,7 @@ kotlin {
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
+            implementation(libs.kotlinx.coroutines.test)
         }
     }
 }

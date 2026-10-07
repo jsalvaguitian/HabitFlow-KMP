@@ -1,4 +1,4 @@
-package com.example.habitflow.model
+package com.example.habitflow.model.dto
 
 import kotlinx.serialization.Serializable
 

@@ -9,3 +9,9 @@ plugins {
     alias(libs.plugins.kotlinSerialization) apply false
     alias(libs.plugins.buildkonfig) apply false
 }
+
+tasks.register("test") {
+    group = "verification"
+    description = "Runs all unit tests across subprojects."
+    dependsOn(":shared:testAndroidHostTest")
+}
