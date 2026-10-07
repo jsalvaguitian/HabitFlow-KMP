@@ -1,0 +1,214 @@
+package com.example.habitflow.ui
+
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeContentPadding
+import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuAnchorType
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.habitflow.model.Habit
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun CreateHabitScreen(
+    viewModel: HabitsViewModel,
+    habitToEdit: Habit? = null,
+    onBack: () -> Unit,
+) {
+    val createUiState by viewModel.createUiState.collectAsStateWithLifecycle()
+
+    val frequencyOptions = remember {
+        listOf(
+            "Diario",
+            "Semanal",
+            "Quincenal",
+            "Mensual",
+            "Bimestral",
+            "Trimestral",
+            "Semestral",
+            "Anual",
+        )
+    }
+
+    var title by remember(habitToEdit) { mutableStateOf(habitToEdit?.title ?: "") }
+    var description by remember(habitToEdit) { mutableStateOf(habitToEdit?.description ?: "") }
+    var frequency by remember(habitToEdit) {
+        mutableStateOf(habitToEdit?.frequency ?: frequencyOptions.first())
+    }
+    var expanded by remember { mutableStateOf(false) }
+
+    LaunchedEffect(createUiState) {
+        if (createUiState is CreateHabitUiState.Success) {
+            viewModel.resetCreateState()
+            onBack()
+        }
+    }
+
+    val isValidationErr = createUiState as? CreateHabitUiState.ValidationError
+    val titleError = isValidationErr?.titleError
+    val frequencyError = isValidationErr?.frequencyError
+    val supabaseError = (createUiState as? CreateHabitUiState.Error)?.message
+    val isLoading = createUiState is CreateHabitUiState.Loading
+
+    Surface(
+        modifier = Modifier.fillMaxSize(),
+        color = MaterialTheme.colorScheme.background,
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .safeContentPadding()
+                .padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Text(
+                text = if (habitToEdit != null) "Editar Hábito" else "Crear Nuevo Hábito",
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.primary,
+            )
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            OutlinedTextField(
+                value = title,
+                onValueChange = { title = it },
+                label = { Text("Título *") },
+                isError = titleError != null,
+                supportingText = titleError?.let { { Text(it, color = MaterialTheme.colorScheme.error) } },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth(),
+                enabled = !isLoading,
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            OutlinedTextField(
+                value = description,
+                onValueChange = { description = it },
+                label = { Text("Descripción (opcional)") },
+                modifier = Modifier.fillMaxWidth(),
+                enabled = !isLoading,
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            ExposedDropdownMenuBox(
+                expanded = expanded,
+                onExpandedChange = { if (!isLoading) expanded = !expanded },
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                OutlinedTextField(
+                    value = frequency,
+                    onValueChange = {},
+                    readOnly = true,
+                    label = { Text("Frecuencia *") },
+                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+                    isError = frequencyError != null,
+                    supportingText = frequencyError?.let { { Text(it, color = MaterialTheme.colorScheme.error) } },
+                    singleLine = true,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable),
+                    enabled = !isLoading,
+                )
+
+                ExposedDropdownMenu(
+                    expanded = expanded,
+                    onDismissRequest = { expanded = false },
+                ) {
+                    frequencyOptions.forEach { option ->
+                        DropdownMenuItem(
+                            text = { Text(option) },
+                            onClick = {
+                                frequency = option
+                                expanded = false
+                            },
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            if (supabaseError != null) {
+                Text(
+                    text = supabaseError,
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.padding(bottom = 12.dp),
+                )
+            }
+
+            if (isLoading) {
+                CircularProgressIndicator()
+                Spacer(modifier = Modifier.height(12.dp))
+            }
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                OutlinedButton(
+                    onClick = {
+                        viewModel.resetCreateState()
+                        onBack()
+                    },
+                    modifier = Modifier.weight(1f),
+                    enabled = !isLoading,
+                ) {
+                    Text("Cancelar")
+                }
+
+                Button(
+                    onClick = {
+                        if (habitToEdit != null) {
+                            viewModel.updateHabit(
+                                id = habitToEdit.id,
+                                title = title,
+                                description = description,
+                                frequency = frequency,
+                            )
+                        } else {
+                            viewModel.createHabit(
+                                title = title,
+                                description = description,
+                                frequency = frequency,
+                            )
+                        }
+                    },
+                    modifier = Modifier.weight(1f),
+                    enabled = !isLoading,
+                ) {
+                    Text(if (habitToEdit != null) "Guardar cambios" else "Guardar")
+                }
+            }
+        }
+    }
+}
