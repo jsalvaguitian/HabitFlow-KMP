@@ -378,7 +378,14 @@ fun HabitItem(
 
 fun formatCreatedAt(rawDate: String): String {
     try {
-        if (rawDate.length >= 10 && rawDate[4] == '-' && rawDate[7] == '-') {
+        if (rawDate.length >= 16 && rawDate[4] == '-' && rawDate[7] == '-' && rawDate[10] == 'T' && rawDate[13] == ':') {
+            val year = rawDate.substring(0, 4)
+            val month = rawDate.substring(5, 7)
+            val day = rawDate.substring(8, 10)
+            val hour = rawDate.substring(11, 13)
+            val minute = rawDate.substring(14, 16)
+            return "$day/$month/$year $hour:$minute"
+        } else if (rawDate.length >= 10 && rawDate[4] == '-' && rawDate[7] == '-') {
             val year = rawDate.substring(0, 4)
             val month = rawDate.substring(5, 7)
             val day = rawDate.substring(8, 10)

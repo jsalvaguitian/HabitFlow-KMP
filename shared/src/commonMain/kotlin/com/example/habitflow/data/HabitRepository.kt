@@ -6,12 +6,15 @@ import com.example.habitflow.model.UpdateHabitCompletionRequest
 import com.example.habitflow.model.UpdateHabitRequest
 import com.example.habitflow.supabase
 import io.github.jan.supabase.postgrest.from
+import io.github.jan.supabase.postgrest.query.Order
 
 class HabitRepository {
     suspend fun getHabits(): List<Habit> {
         return supabase
             .from("habits")
-            .select()
+            .select {
+                order("id", order = Order.ASCENDING)
+            }
             .decodeList<Habit>()
     }
 

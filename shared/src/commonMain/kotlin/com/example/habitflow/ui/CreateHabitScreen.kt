@@ -11,6 +11,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeContentPadding
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuAnchorType
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -29,6 +34,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.habitflow.model.Habit
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CreateHabitScreen(
     viewModel: HabitsViewModel,
@@ -37,9 +43,25 @@ fun CreateHabitScreen(
 ) {
     val createUiState by viewModel.createUiState.collectAsStateWithLifecycle()
 
+    val frequencyOptions = remember {
+        listOf(
+            "Diario",
+            "Semanal",
+            "Quincenal",
+            "Mensual",
+            "Bimestral",
+            "Trimestral",
+            "Semestral",
+            "Anual",
+        )
+    }
+
     var title by remember(habitToEdit) { mutableStateOf(habitToEdit?.title ?: "") }
     var description by remember(habitToEdit) { mutableStateOf(habitToEdit?.description ?: "") }
-    var frequency by remember(habitToEdit) { mutableStateOf(habitToEdit?.frequency ?: "Diaria") }
+    var frequency by remember(habitToEdit) {
+        mutableStateOf(habitToEdit?.frequency ?: frequencyOptions.first())
+    }
+    var expanded by remember { mutableStateOf(false) }
 
     LaunchedEffect(createUiState) {
         if (createUiState is CreateHabitUiState.Success) {
@@ -97,16 +119,41 @@ fun CreateHabitScreen(
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            OutlinedTextField(
-                value = frequency,
-                onValueChange = { frequency = it },
-                label = { Text("Frecuencia * (Ej: Diaria, Semanal)") },
-                isError = frequencyError != null,
-                supportingText = frequencyError?.let { { Text(it, color = MaterialTheme.colorScheme.error) } },
-                singleLine = true,
+            ExposedDropdownMenuBox(
+                expanded = expanded,
+                onExpandedChange = { if (!isLoading) expanded = !expanded },
                 modifier = Modifier.fillMaxWidth(),
-                enabled = !isLoading,
-            )
+            ) {
+                OutlinedTextField(
+                    value = frequency,
+                    onValueChange = {},
+                    readOnly = true,
+                    label = { Text("Frecuencia *") },
+                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+                    isError = frequencyError != null,
+                    supportingText = frequencyError?.let { { Text(it, color = MaterialTheme.colorScheme.error) } },
+                    singleLine = true,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable),
+                    enabled = !isLoading,
+                )
+
+                ExposedDropdownMenu(
+                    expanded = expanded,
+                    onDismissRequest = { expanded = false },
+                ) {
+                    frequencyOptions.forEach { option ->
+                        DropdownMenuItem(
+                            text = { Text(option) },
+                            onClick = {
+                                frequency = option
+                                expanded = false
+                            },
+                        )
+                    }
+                }
+            }
 
             Spacer(modifier = Modifier.height(16.dp))
 
