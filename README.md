@@ -288,9 +288,9 @@ El workflow ejecuta los tests automáticamente ante cambios en el repositorio y 
 
 ## Capturas
 
-| Launcher Icon | Pantalla principal |
-|:---:|:---:|
-| <img src="screenshots/launcher_icon.png" height="350"> | <img src="screenshots/Home.jpg" height="350"> |
+|                     Launcher Icon                      | Pantalla principal |
+|:------------------------------------------------------:|:---:|
+| <img src="screenshots/launcher_icon.jpg" height="350"> | <img src="screenshots/Home.jpg" height="350"> |
 
 | Creación de hábitos | Edición de hábitos |
 |:---:|:---:|
