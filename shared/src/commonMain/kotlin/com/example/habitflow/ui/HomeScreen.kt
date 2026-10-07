@@ -21,6 +21,8 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -43,6 +45,12 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.habitflow.model.Habit
 import com.example.habitflow.ui.theme.IntelliJSurfaceCompleted
 
+enum class HabitFilter(val label: String) {
+    ALL("Todos"),
+    PENDING("Pendientes"),
+    COMPLETED("Completados"),
+}
+
 @Composable
 fun HomeScreen(
     viewModel: HabitsViewModel,
@@ -52,6 +60,7 @@ fun HomeScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val updatingIds by viewModel.updatingHabitIds.collectAsStateWithLifecycle()
     var habitToDelete by remember { mutableStateOf<Habit?>(null) }
+    var selectedFilter by remember { mutableStateOf(HabitFilter.ALL) }
 
     if (habitToDelete != null) {
         val habit = habitToDelete!!
@@ -160,49 +169,94 @@ fun HomeScreen(
                 }
 
                 is HabitsUiState.Success -> {
-                    if (state.habits.isEmpty()) {
-                        Box(
+                    Column(modifier = Modifier.fillMaxSize()) {
+                        Row(
                             modifier = Modifier
-                                .fillMaxSize()
-                                .padding(24.dp),
-                            contentAlignment = Alignment.Center,
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp, vertical = 8.dp),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalAlignment = Alignment.CenterVertically,
                         ) {
-                            Column(
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                verticalArrangement = Arrangement.Center,
-                            ) {
-                                Text(
-                                    text = "Todavía no tenés hábitos",
-                                    style = MaterialTheme.typography.titleLarge,
-                                    fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.onSurface,
+                            HabitFilter.entries.forEach { filter ->
+                                FilterChip(
+                                    selected = selectedFilter == filter,
+                                    onClick = { selectedFilter = filter },
+                                    label = { Text(filter.label) },
+                                    colors = FilterChipDefaults.filterChipColors(
+                                        selectedContainerColor = MaterialTheme.colorScheme.primary,
+                                        selectedLabelColor = MaterialTheme.colorScheme.onPrimary,
+                                        containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                        labelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    ),
                                 )
-                                Spacer(modifier = Modifier.height(8.dp))
-                                Text(
-                                    text = "Comenzá creando tu primer hábito para mejorar tu rutina.",
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                )
-                                Spacer(modifier = Modifier.height(20.dp))
-                                Button(onClick = onCreateHabitClick) {
-                                    Text("Crear hábito")
-                                }
                             }
                         }
-                    } else {
-                        LazyColumn(
-                            modifier = Modifier.fillMaxSize(),
-                            contentPadding = PaddingValues(16.dp),
-                            verticalArrangement = Arrangement.spacedBy(12.dp),
-                        ) {
-                            items(state.habits, key = { it.id }) { habit ->
-                                HabitItem(
-                                    habit = habit,
-                                    isUpdating = updatingIds.contains(habit.id),
-                                    onToggleCompletion = { viewModel.toggleHabitCompletion(habit) },
-                                    onEditClick = { onEditHabitClick(habit) },
-                                    onDeleteClick = { habitToDelete = habit },
+
+                        val filteredHabits = remember(state.habits, selectedFilter) {
+                            when (selectedFilter) {
+                                HabitFilter.ALL -> state.habits
+                                HabitFilter.PENDING -> state.habits.filter { !it.completed }
+                                HabitFilter.COMPLETED -> state.habits.filter { it.completed }
+                            }
+                        }
+
+                        if (state.habits.isEmpty()) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(24.dp),
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    verticalArrangement = Arrangement.Center,
+                                ) {
+                                    Text(
+                                        text = "Todavía no tenés hábitos",
+                                        style = MaterialTheme.typography.titleLarge,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.onSurface,
+                                    )
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    Text(
+                                        text = "Comenzá creando tu primer hábito para mejorar tu rutina.",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    )
+                                    Spacer(modifier = Modifier.height(20.dp))
+                                    Button(onClick = onCreateHabitClick) {
+                                        Text("Crear hábito")
+                                    }
+                                }
+                            }
+                        } else if (filteredHabits.isEmpty()) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(24.dp),
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                Text(
+                                    text = "No hay hábitos ${selectedFilter.label.lowercase()}.",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 )
+                            }
+                        } else {
+                            LazyColumn(
+                                modifier = Modifier.fillMaxSize(),
+                                contentPadding = PaddingValues(16.dp),
+                                verticalArrangement = Arrangement.spacedBy(12.dp),
+                            ) {
+                                items(filteredHabits, key = { it.id }) { habit ->
+                                    HabitItem(
+                                        habit = habit,
+                                        isUpdating = updatingIds.contains(habit.id),
+                                        onToggleCompletion = { viewModel.toggleHabitCompletion(habit) },
+                                        onEditClick = { onEditHabitClick(habit) },
+                                        onDeleteClick = { habitToDelete = habit },
+                                    )
+                                }
                             }
                         }
                     }
